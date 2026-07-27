@@ -1,0 +1,21 @@
+{
+  "name": "wp-blog-agent",
+  "version": "1.0.0",
+  "description": "Autonomous SEO blog pipeline that researches, writes and publishes draft articles to WordPress. Multi-client, text-first.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test:wp": "node scripts/wp-test.mjs",
+    "keywords": "node scripts/autocomplete.mjs",
+    "publish": "node scripts/publish.mjs",
+    "run": "node orchestrate.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "gray-matter": "^4.0.3",
+    "marked": "^12.0.2"
+  }
+}

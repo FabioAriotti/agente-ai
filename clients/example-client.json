@@ -1,0 +1,43 @@
+{
+  "name": "example-client",
+  "displayName": "Example Client Ltd",
+  "language": "en",
+
+  "wp": {
+    "url": "https://example.com",
+    "user": "editor_username",
+    "appPasswordEnv": "WP_APP_PASSWORD_EXAMPLE_CLIENT"
+  },
+
+  "publish": {
+    "status": "draft",
+    "defaultCategory": "Blog"
+  },
+
+  "content": {
+    "brandName": "Example Client",
+    "audience": "small business owners evaluating X for their company",
+    "tone": "clear, practical, expert but not academic",
+    "moneyPage": "https://example.com/contact",
+    "verticals": [
+      {
+        "name": "Topic Cluster One",
+        "seeds": ["primary seed keyword", "second seed keyword", "third seed"],
+        "moneyPage": "https://example.com/services/thing-one"
+      },
+      {
+        "name": "Topic Cluster Two",
+        "seeds": ["another seed keyword", "yet another seed"],
+        "moneyPage": "https://example.com/services/thing-two"
+      }
+    ],
+    "forbidden": [
+      "no invented statistics or fake sources",
+      "no em dashes",
+      "no generic AI filler (\"in today's fast-paced world\", \"unlock the power of\")",
+      "never claim the client offers a product/service not listed in the config"
+    ]
+  },
+
+  "articlesPerRun": 2
+}

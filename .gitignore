@@ -1,0 +1,8 @@
+node_modules/
+.env
+workspace/briefs/*
+workspace/ready/*
+workspace/published/*
+!workspace/**/.gitkeep
+*.log
+.DS_Store
