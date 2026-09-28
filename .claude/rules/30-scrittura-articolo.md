@@ -57,7 +57,7 @@ template corrispondeva.
 
 Vale tutta la regola 20. In sintesi:
 
-1. **8-12 statistiche attuali**, fonti di livello 1-3, con statistica, editore, URL, data, metodologia.
+1. **Fino a 8-12 statistiche attuali**, fonti di livello 1-3, con statistica, editore, URL, data, metodologia. È un tetto, non una quota: vale solo ciò che si trova su una pagina aperta davvero. Se la ricerca non trova niente di verificato, l'articolo resta qualitativo; una statistica senza pagina aperta dietro non si scrive mai per arrivare al numero.
 2. **Immagine di copertina**: si preferiscono screenshot originali, visual di prodotto, diagrammi o grafici di dati. Per lo stock si usano le API ufficiali (Openverse, Unsplash, Pexels, Pixabay) così da catturare licenza, autore, URL della fonte e URL di download. Gli asset approvati si **scaricano** nella cartella della bozza e si conserva l'attribuzione: **mai hotlink a URL CDN arbitrari**. Si rifiutano URL `javascript:`, `data:` e `file:`. Dimensioni 1200x630 o 1920x1080.
 3. **3-5 immagini inline** dalle stesse fonti, scaricate localmente, con licenza e data di recupero.
 4. **2-4 visualizzazioni di dati** dalle statistiche trovate, di tipi diversi.

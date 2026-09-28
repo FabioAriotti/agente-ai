@@ -10,6 +10,7 @@
   "scripts": {
     "test:wp": "node scripts/wp-test.mjs",
     "keywords": "node scripts/autocomplete.mjs",
+    "check": "node scripts/check.mjs",
     "publish": "node scripts/publish.mjs",
     "run": "node orchestrate.mjs"
   },

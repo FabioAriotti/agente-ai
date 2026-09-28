@@ -27,16 +27,33 @@ const ALPHA = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const QUESTIONS = ['how', 'what', 'why', 'when', 'where', 'which', 'who', 'can', 'is', 'are', 'do', 'does', 'will'];
 const MODIFIERS = ['best', 'vs', 'for', 'without', 'free', 'cheap', 'alternative', 'near me', 'examples', 'tips'];
 
+// Italian clients get Italian prefixes: "how manutenzione sito web" is not a query anyone types.
+const QUESTIONS_IT = ['come', 'cosa', 'perché', 'quando', 'dove', 'quale', 'quanto costa', 'chi', 'si può', 'serve'];
+const MODIFIERS_IT = ['migliore', 'vs', 'per', 'senza', 'gratis', 'prezzi', 'alternativa', 'vicino a me', 'esempi', 'consigli'];
+
+// Requests that never got an answer from Google. An empty list must mean "Google has
+// no suggestions", never "we could not reach Google": inside a sandbox without network
+// (Codex's default) every request fails, and a silent empty result lets the agent
+// fill the "real questions" from memory.
+let failed = 0;
+let lastError = '';
+
 async function suggest(query) {
   const url =
     `https://suggestqueries.google.com/complete/search?client=firefox` +
     `&hl=${encodeURIComponent(lang)}&gl=${encodeURIComponent(gl)}&q=${encodeURIComponent(query)}`;
   try {
     const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      failed++;
+      lastError = `HTTP ${res.status}`;
+      return [];
+    }
     const data = await res.json(); // [ query, [suggestions...] ]
     return Array.isArray(data?.[1]) ? data[1] : [];
-  } catch {
+  } catch (e) {
+    failed++;
+    lastError = e.cause?.code || e.message;
     return [];
   }
 }
@@ -44,8 +61,8 @@ async function suggest(query) {
 // Build the expansion set: seed, seed+letter, prefix+seed, seed+modifier.
 const queries = new Set([seed]);
 for (const c of ALPHA) queries.add(`${seed} ${c}`);
-for (const q of QUESTIONS) queries.add(`${q} ${seed}`);
-for (const m of MODIFIERS) queries.add(`${seed} ${m}`);
+for (const q of lang === 'it' ? QUESTIONS_IT : QUESTIONS) queries.add(`${q} ${seed}`);
+for (const m of lang === 'it' ? MODIFIERS_IT : MODIFIERS) queries.add(`${seed} ${m}`);
 
 const results = new Set();
 
@@ -60,6 +77,18 @@ async function worker() {
   }
 }
 await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+
+if (failed === queries.size) {
+  console.error(
+    `\nERROR: Google Autocomplete did not answer any of the ${failed} requests (${lastError}).\n` +
+      'The network is blocked, so there are NO real queries: do not write briefs from memory.\n' +
+      'Codex: allow network access (README, section "Codex"). Otherwise check your connection.'
+  );
+  process.exit(2);
+}
+if (failed > 0) {
+  console.error(`WARNING: ${failed}/${queries.size} Autocomplete requests failed (${lastError}); results are partial.`);
+}
 
 const sorted = [...results].filter((s) => s.includes(seed.split(' ')[0])).sort();
 

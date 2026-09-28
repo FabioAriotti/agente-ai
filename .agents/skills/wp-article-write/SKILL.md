@@ -47,11 +47,17 @@ Answer.
   H2, naturally. Cover the brief's listed questions. Prefer clear, scannable sections.
 - **Length**: enough to fully answer the intent, typically 900-1500 words. Depth over padding.
 - **Voice**: match the client's `tone` and `audience`.
-- **Links**: only the money page and, if genuinely useful, other articles already in
-  `workspace/published/`. Do not invent external sources or statistics.
+- **Links**: only the money page, the URLs listed under `## Fonti verificate` in the
+  brief, and, if genuinely useful, other articles already in `workspace/published/`.
+  No other external link.
+- **Facts and numbers**: a statistic, a study, a percentage or an "according to X" may
+  appear only if it is in the `citazione` of a source in the brief, linked inline in the
+  same sentence: `[value] [claim] ([Publisher](url), [year])`. Keep the number exactly as
+  the source states it. If the brief says `Nessuna.`, write without statistics: explain,
+  compare, give steps and criteria. That is a complete article.
 
 ## Inviolable rules (from clients/<client>.json content.forbidden)
-- No invented statistics, studies, or quotes.
+- No invented statistics, studies, or quotes. No URL written from memory.
 - No em dashes; use commas, colons, or separate sentences.
 - No generic AI filler ("in today's fast-paced world", "unlock the power of", "delve into").
 - Never claim the client sells a product/service not present in the config.

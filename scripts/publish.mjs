@@ -1,15 +1,17 @@
 // scripts/publish.mjs — publish every ready article as a WordPress DRAFT.
-// Usage: npm run publish -- <client-name> [--status draft|publish] [--file path.md]
+// Usage: npm run publish -- <client-name> [--status draft|publish] [--file path.md] [--force]
 //
-// Reads workspace/ready/*.md (or a single --file), converts Markdown to HTML,
+// Reads workspace/ready/*.md (or a single --file), runs the evidence check
+// (lib/check.mjs) and skips any article that fails it, converts Markdown to HTML,
 // resolves category + tags, creates the post as a draft, and moves the source
-// file to workspace/published/ on success.
+// file to workspace/published/ on success. --force publishes without the check.
 import fs from 'node:fs';
 import path from 'node:path';
 import matter from 'gray-matter';
 import { marked } from 'marked';
 import { loadClient, paths } from '../lib/config.mjs';
 import { ensureCategory, ensureTags, createPost, editUrl } from '../lib/wp.mjs';
+import { checkArticle, formatResult, networkAvailable } from '../lib/check.mjs';
 
 function arg(flag) {
   const i = process.argv.indexOf(flag);
@@ -19,6 +21,7 @@ function arg(flag) {
 const name = process.argv[2];
 const statusOverride = arg('--status');
 const singleFile = arg('--file');
+const force = process.argv.includes('--force');
 
 function readyFiles() {
   if (singleFile) return [path.resolve(singleFile)];
@@ -39,11 +42,24 @@ try {
     process.exit(0);
   }
 
+  if (!force && !(await networkAvailable())) {
+    throw new Error('no network: the evidence check cannot open the sources, nothing was published.');
+  }
+
   fs.mkdirSync(paths.published, { recursive: true });
   console.log(`Publishing ${files.length} article(s) to ${client.wpAuth.root} as "${status}"\n`);
 
   let ok = 0;
   for (const file of files) {
+    if (!force) {
+      const check = await checkArticle(file, client);
+      if (check.errors.length) {
+        console.error(`  SKIP ${path.basename(file)} — fails the evidence check, stays in workspace/ready/:`);
+        console.error(formatResult(check).split('\n').slice(1).map((l) => `    ${l}`).join('\n'));
+        continue;
+      }
+    }
+
     const raw = fs.readFileSync(file, 'utf8');
     const { data, content } = matter(raw);
 

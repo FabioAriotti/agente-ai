@@ -5,7 +5,10 @@ does an editorial QA pass, and publishes them to a WordPress site **as drafts** 
 review. Text-first (no image generation), and it supports **multiple client sites** from one
 install.
 
-Pipeline: **Research → Write → Review → Publish (draft)**.
+Pipeline: **Research → Write → Review → Check → Publish (draft)**.
+
+It runs on **Claude Code** or **Codex**: both read the same instructions (`AGENTS.md`) and the
+same skills (`.agents/skills/`).
 
 ---
 
@@ -16,9 +19,10 @@ Pipeline: **Research → Write → Review → Publish (draft)**.
   browser — it must return JSON, not an error page).
 - **A WordPress user** with the **Editor** or **Administrator** role, and one
   **Application Password** for that user (steps below).
-- **Claude Code CLI** installed and signed in — only needed for the *writing* stages
-  (research/write/review). Publishing to WordPress does **not** need Claude. Install:
-  `npm i -g @anthropic-ai/claude-code`, then run `claude` once to sign in.
+- **One AI agent** installed and signed in — only needed for the *writing* stages
+  (research/write/review). Publishing to WordPress does **not** need it. Either:
+  - **Claude Code:** `npm i -g @anthropic-ai/claude-code`, then run `claude` once to sign in;
+  - **Codex:** `npm i -g @openai/codex`, then run `codex` once to sign in. Read section 10.
 
 ---
 
@@ -92,22 +96,32 @@ what to check.
 ```bash
 node orchestrate.mjs acme --publish
 ```
-Research → write → review → create WordPress drafts. Drop `--publish` to stop before
+Research → write → review → check → create WordPress drafts. Drop `--publish` to stop before
 publishing and review the files in `workspace/ready/` first. Add `--dry` to see the stages
-without calling Claude.
+without calling the agent. It uses Claude Code if installed, otherwise Codex; force one with
+`--engine codex` or `--engine claude`.
+
+The **check** stage (`npm run check -- acme`) is a script, not a model: it opens every page an
+article cites and looks for the cited numbers in it, and it flags statistics with no source,
+"according to a study" with no link, dead links and links the research never opened. An
+article with an `ERROR` line gets one automatic fix pass; if it still fails, it stays in
+`workspace/ready/` and **is not published**.
 
 ### Manual / interactive (more control)
 1. Mine keyword ideas (free, no key):
    ```bash
    npm run keywords -- "your seed keyword" --lang en --gl us
    ```
-2. Open Claude Code in this folder and ask it to "run the pipeline for acme" — it uses the
-   skills in `.claude/skills/` (research → write → review), writing files into `workspace/`.
-3. Publish the reviewed drafts:
+2. Open Claude Code or Codex in this folder and ask it to "run the pipeline for acme" — it
+   uses the skills in `.agents/skills/` (research → write → review), writing files into
+   `workspace/`. With Codex, read section 10 first.
+3. Check the sources, then publish the reviewed drafts:
    ```bash
+   npm run check -- acme
    npm run publish -- acme
    ```
-   Each draft's edit link is printed. Review in WordPress, then hit Publish yourself.
+   `publish` runs the same check and skips articles that fail it (`--force` skips the check:
+   don't). Each draft's edit link is printed. Review in WordPress, then hit Publish yourself.
 
 ---
 
@@ -133,8 +147,12 @@ wp-blog-agent/
   scripts/
     wp-test.mjs              test the WordPress connection
     autocomplete.mjs         free keyword miner (Google Autocomplete)
+    check.mjs                evidence check: opens every cited source (lib/check.mjs)
     publish.mjs              markdown -> HTML -> WordPress draft
-  .claude/skills/            the agent's instructions per stage (research/write/review/publish)
+  AGENTS.md                  the agent's instructions (CLAUDE.md imports it)
+  .agents/skills/            the agent's instructions per stage (research/write/review/publish)
+  .claude/skills             link to .agents/skills, for Claude Code
+  .claude/rules/             editorial rules, loaded per stage
   orchestrate.mjs            run all stages for one client, unattended
   workspace/
     briefs/                  research output (one brief per article)
@@ -156,3 +174,30 @@ wp-blog-agent/
 - **Keyword volumes:** this version uses free real-question mining (Autocomplete) plus your
   Search Console data for prioritization. Exact search volumes (Google Keyword Planner) can be
   added later.
+
+---
+
+## 10. Codex
+
+The agent works with Codex, but Codex has two defaults that make it write from memory:
+
+1. **No network inside its sandbox.** `scripts/autocomplete.mjs` cannot reach Google, and
+   the agent cannot open sources. The script now stops with
+   `ERROR: Google Autocomplete did not answer…` instead of returning an empty list.
+2. **Web search from a cache**, not live pages: good for finding a source, not for copying a
+   sentence from it.
+
+`node orchestrate.mjs acme --engine codex` already runs Codex with network on, live search
+on, writes limited to this folder, and a reasoning effort per stage. Options:
+`CODEX_MODEL=<model>` to pick the model, `CODEX_EFFORT=high` to force one effort for all
+stages.
+
+To work **interactively**, start Codex in this folder with the same settings:
+
+```bash
+codex -c sandbox_workspace_write.network_access=true -c web_search="live"
+```
+
+then ask: "run the pipeline for acme". If the agent reports that the network is blocked, it
+was started without those settings. Codex reads `AGENTS.md` and the skills in
+`.agents/skills/` by itself: type `$` to see them (`$wp-keyword-research`, …).
